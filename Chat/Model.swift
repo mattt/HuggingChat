@@ -1,4 +1,4 @@
-enum Model: Hashable, Codable {
+enum Model: Hashable, Codable, Sendable {
     case system
     case mlx(String)
     case ollama(String)
