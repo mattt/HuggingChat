@@ -3,6 +3,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Chat.updatedAt, order: .reverse) private var chats: [Chat]
     @State private var selectedChat: Chat?
     @State private var viewModel: ChatViewModel?
 
@@ -25,7 +26,11 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
             if let viewModel {
-                selectedChat = viewModel.createNewChat()
+                if let emptyChat = chats.first(where: { $0.messages.isEmpty }) {
+                    selectedChat = emptyChat
+                } else {
+                    selectedChat = viewModel.createNewChat()
+                }
             }
         }
     }
