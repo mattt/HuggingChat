@@ -11,13 +11,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		F816A36B2E9A7F4200E4D8AC /* Chat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Chat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F816A36B2E9A7F4200E4D8AC /* HuggingChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HuggingChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		F816A36D2E9A7F4200E4D8AC /* Chat */ = {
+		F816A36D2E9A7F4200E4D8AC /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Chat;
+			path = App;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +37,7 @@
 		F816A3622E9A7F4200E4D8AC = {
 			isa = PBXGroup;
 			children = (
-				F816A36D2E9A7F4200E4D8AC /* Chat */,
+				F816A36D2E9A7F4200E4D8AC /* App */,
 				F816A36C2E9A7F4200E4D8AC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 		F816A36C2E9A7F4200E4D8AC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F816A36B2E9A7F4200E4D8AC /* Chat.app */,
+				F816A36B2E9A7F4200E4D8AC /* HuggingChat.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F816A36A2E9A7F4200E4D8AC /* Chat */ = {
+		F816A36A2E9A7F4200E4D8AC /* HuggingChat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F816A3782E9A7F4300E4D8AC /* Build configuration list for PBXNativeTarget "Chat" */;
+			buildConfigurationList = F816A3782E9A7F4300E4D8AC /* Build configuration list for PBXNativeTarget "HuggingChat" */;
 			buildPhases = (
 				F816A3672E9A7F4200E4D8AC /* Sources */,
 				F816A3682E9A7F4200E4D8AC /* Frameworks */,
@@ -66,14 +66,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				F816A36D2E9A7F4200E4D8AC /* Chat */,
+				F816A36D2E9A7F4200E4D8AC /* App */,
 			);
-			name = Chat;
+			name = HuggingChat;
 			packageProductDependencies = (
 				F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */,
 			);
 			productName = Chat;
-			productReference = F816A36B2E9A7F4200E4D8AC /* Chat.app */;
+			productReference = F816A36B2E9A7F4200E4D8AC /* HuggingChat.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -91,7 +91,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F816A3662E9A7F4200E4D8AC /* Build configuration list for PBXProject "Chat" */;
+			buildConfigurationList = F816A3662E9A7F4200E4D8AC /* Build configuration list for PBXProject "HuggingChat" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				F816A36A2E9A7F4200E4D8AC /* Chat */,
+				F816A36A2E9A7F4200E4D8AC /* HuggingChat */,
 			);
 		};
 /* End PBXProject section */
@@ -341,7 +341,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F816A3662E9A7F4200E4D8AC /* Build configuration list for PBXProject "Chat" */ = {
+		F816A3662E9A7F4200E4D8AC /* Build configuration list for PBXProject "HuggingChat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F816A3762E9A7F4300E4D8AC /* Debug */,
@@ -350,7 +350,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F816A3782E9A7F4300E4D8AC /* Build configuration list for PBXNativeTarget "Chat" */ = {
+		F816A3782E9A7F4300E4D8AC /* Build configuration list for PBXNativeTarget "HuggingChat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F816A3792E9A7F4300E4D8AC /* Debug */,
