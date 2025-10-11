@@ -109,6 +109,7 @@ struct InputBarView: View {
     let isGenerating: Bool
     let selectedModel: Model
     let onSend: () -> Void
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 12) {
@@ -120,6 +121,10 @@ struct InputBarView: View {
                 .lineLimit(1 ... 10)
                 .onSubmit(onSend)
                 .disabled(isGenerating)
+                .focused($isFocused)
+                .onAppear {
+                    isFocused = true
+                }
 
             HStack(spacing: 8) {
                 Menu {
