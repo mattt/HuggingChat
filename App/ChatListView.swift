@@ -47,10 +47,6 @@ struct ChatListView: View {
                     Label("New Chat", systemImage: "square.and.pencil")
                 }
             }
-
-            ToolbarItem(placement: .automatic) {
-                UserMenuButton()
-            }
         }
     }
 
@@ -79,48 +75,6 @@ private struct ChatRowView: View {
             .foregroundStyle(chat.title == nil ? .tertiary : .primary)
             .padding(.vertical, 4)
             .help(chat.title ?? "New Chat")
-    }
-}
-
-private struct UserMenuButton: View {
-    @Environment(AuthenticationManager.self) private var authManager
-
-    var body: some View {
-        Menu {
-            if let user = authManager.currentUser {
-                Section {
-                    Text(user.preferredUsername ?? user.name ?? "User")
-                    if let email = user.email {
-                        Text(email)
-                    }
-                }
-            }
-
-            Button("Sign Out") {
-                Task {
-                    await authManager.signOut()
-                }
-            }
-        } label: {
-            if let user = authManager.currentUser,
-                let pictureURL = user.picture,
-                let url = URL(string: pictureURL)
-            {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                }
-                .frame(width: 24, height: 24)
-                .clipShape(Circle())
-            } else {
-                Image(systemName: "person.circle.fill")
-            }
-        }
-        .menuStyle(.borderlessButton)
     }
 }
 
