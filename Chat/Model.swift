@@ -1,0 +1,7 @@
+enum Model: Hashable, Codable {
+    case system
+    case mlx(String)
+    case ollama(String)
+    case openAI(String)
+    case anthropic(String)
+}
