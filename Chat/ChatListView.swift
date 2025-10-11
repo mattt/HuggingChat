@@ -72,6 +72,7 @@ struct ChatRowView: View {
             Text(chat.title)
                 .font(.headline)
                 .lineLimit(1)
+                .foregroundStyle(chat.messages.isEmpty ? .tertiary : .primary)
 
             if let lastMessage = chat.messages.last {
                 Text(lastMessage.content)
