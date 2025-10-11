@@ -16,6 +16,20 @@ struct ChatListView: View {
                         NavigationLink(value: chat) {
                             ChatRowView(chat: chat)
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                viewModel.deleteChat(chat)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                viewModel.deleteChat(chat)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
                     .onDelete { indexSet in
                         deleteChats(in: dateGroup, at: indexSet)
