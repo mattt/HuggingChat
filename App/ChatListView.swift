@@ -64,7 +64,7 @@ struct ChatListView: View {
     }
 }
 
-struct ChatRowView: View {
+private struct ChatRowView: View {
     let chat: Chat
     let isSelected: Bool
 

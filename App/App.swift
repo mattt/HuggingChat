@@ -21,9 +21,15 @@ struct App: SwiftUI.App {
         }
     }()
 
+    @State private var authManager = AuthenticationManager(
+        clientID: "your_client_id_here",
+        redirectURI: "huggingchat://oauth/callback"
+    )
+
     var body: some Scene {
         Window("Chat", id: "main") {
             ContentView()
+                .environment(authManager)
         }
         .modelContainer(sharedModelContainer)
         .defaultSize(width: 900, height: 600)
