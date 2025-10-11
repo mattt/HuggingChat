@@ -23,6 +23,11 @@ struct ContentView: View {
                 viewModel = ChatViewModel(modelContext: modelContext)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
+            if let viewModel {
+                selectedChat = viewModel.createNewChat()
+            }
+        }
     }
 }
 

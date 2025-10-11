@@ -1,6 +1,10 @@
 import SwiftUI
 import SwiftData
 
+extension Notification.Name {
+    static let newChat = Notification.Name("NewChat")
+}
+
 @main
 struct App: SwiftUI.App {
     var sharedModelContainer: ModelContainer = {
@@ -18,9 +22,18 @@ struct App: SwiftUI.App {
     }()
 
     var body: some Scene {
-        WindowGroup {
+        Window("Chat", id: "main") {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+        .defaultSize(width: 900, height: 600)
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("New Chat") {
+                    NotificationCenter.default.post(name: .newChat, object: nil)
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+        }
     }
 }
