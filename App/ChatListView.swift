@@ -14,7 +14,7 @@ struct ChatListView: View {
                 Section(header: Text(dateGroup.title)) {
                     ForEach(groupedChats[dateGroup] ?? []) { chat in
                         NavigationLink(value: chat) {
-                            ChatRowView(chat: chat)
+                            ChatRowView(chat: chat, isSelected: selectedChat?.id == chat.id)
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -66,26 +66,19 @@ struct ChatListView: View {
 
 struct ChatRowView: View {
     let chat: Chat
+    let isSelected: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(chat.title)
-                .font(.headline)
-                .lineLimit(1)
-                .foregroundStyle(chat.messages.isEmpty ? .tertiary : .primary)
-
-            if let lastMessage = chat.messages.last {
-                Text(lastMessage.content)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-        }
-        .padding(.vertical, 4)
+        Text(chat.title ?? "New Chat")
+            .font(isSelected ? .headline : .body)
+            .lineLimit(1)
+            .foregroundStyle(chat.title == nil ? .tertiary : .primary)
+            .padding(.vertical, 4)
+            .help(chat.title ?? "New Chat")
     }
 }
 
-enum DateGroup: Hashable, Comparable {
+private enum DateGroup: Hashable, Comparable {
     case today
     case yesterday
     case thisWeek

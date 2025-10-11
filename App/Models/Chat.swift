@@ -4,7 +4,7 @@ import SwiftData
 @Model
 final class Chat {
     @Attribute(.unique) var id: UUID
-    var title: String
+    var title: String?
     var createdAt: Date
     var updatedAt: Date
     var model: Model
@@ -12,7 +12,7 @@ final class Chat {
     @Relationship(deleteRule: .cascade, inverse: \Message.chat)
     var messages: [Message] = []
 
-    init(title: String = "New Chat", model: Model = .system) {
+    init(title: String? = nil, model: Model = .system) {
         self.id = UUID()
         self.title = title
         self.createdAt = Date()
@@ -20,4 +20,3 @@ final class Chat {
         self.model = model
     }
 }
-

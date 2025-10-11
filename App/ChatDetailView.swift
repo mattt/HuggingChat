@@ -43,7 +43,7 @@ struct ChatDetailView: View {
                 sendMessage()
             }
         }
-        .navigationTitle(chat.title)
+        .navigationTitle(chat.title ?? "New Chat")
         .navigationSubtitle(chat.model.displayName)
     }
 

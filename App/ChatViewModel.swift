@@ -24,10 +24,6 @@ final class ChatViewModel {
         chat.messages.append(userMessage)
         chat.updatedAt = Date()
 
-        if chat.title == "New Chat" {
-            chat.title = String(content.prefix(50))
-        }
-
         modelContext.insert(userMessage)
 
         do {
@@ -64,11 +60,50 @@ final class ChatViewModel {
 
             modelContext.insert(assistantMessage)
             try modelContext.save()
+
+            let isFirstResponse = chat.messages.filter { !$0.isUser }.count == 1
+            if isFirstResponse && chat.title == nil {
+                await generateTitle(for: chat)
+            }
         } catch {
             errorMessage = "Failed to generate response: \(error.localizedDescription)"
         }
 
         isGenerating = false
+    }
+
+    private func generateTitle(for chat: Chat) async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                do {
+                    let systemModel = SystemLanguageModel()
+                    let session = LanguageModelSession(model: systemModel)
+
+                    let conversationText = chat.messages
+                        .map { "\($0.isUser ? "User" : "Assistant"): \($0.content)" }
+                        .joined(separator: "\n")
+
+                    let titlePrompt = """
+                        Generate a short, concise title (5 words or less) for this conversation:
+
+                        \(conversationText)
+
+                        Return only the title, nothing else.
+                        """
+
+                    let response = try await session.respond(to: titlePrompt)
+
+                    await MainActor.run {
+                        chat.title = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                        try? self.modelContext.save()
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
+                    }
+                }
+            }
+        }
     }
 
     func createNewChat(model: Model = .system) -> Chat {
