@@ -207,95 +207,15 @@ private struct TypingIndicatorView: View {
 }
 
 struct EmptyStateView: View {
-    @Environment(AuthenticationManager.self) private var authManager
-    @State private var isSigningIn = false
-
     var body: some View {
-        VStack(spacing: 24) {
-            if authManager.isAuthenticated {
-                // Authenticated state
-                VStack(spacing: 16) {
-                    if let user = authManager.currentUser {
-                        if let pictureURL = user.picture,
-                            let url = URL(string: pictureURL)
-                        {
-                            AsyncImage(url: url) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                ProgressView()
-                            }
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-                        }
+        VStack(spacing: 16) {
+            Image(systemName: "brain")
+                .font(.system(size: 64))
+                .foregroundStyle(.secondary)
 
-                        Text(user.preferredUsername ?? user.name ?? "User")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-
-                        if let email = user.email {
-                            Text(email)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Image(systemName: "brain")
-                        .font(.system(size: 64))
-                        .foregroundStyle(.secondary)
-                        .padding(.top)
-
-                    Text("Select a chat or create a new one")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-
-                    Button("Sign Out") {
-                        Task {
-                            await authManager.signOut()
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                }
-            } else {
-                // Unauthenticated state
-                VStack(spacing: 20) {
-                    Image(systemName: "face.smiling")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.tint)
-
-                    Text("Sign in with Hugging Face")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-
-                    Button {
-                        isSigningIn = true
-                        Task {
-                            await authManager.signIn()
-                            isSigningIn = false
-                        }
-                    } label: {
-                        if isSigningIn {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .controlSize(.small)
-                        } else {
-                            Text("Sign In")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isSigningIn)
-                    .controlSize(.large)
-
-                    if let error = authManager.errorMessage {
-                        Text(error)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                }
-            }
+            Text("Select a chat or create a new one")
+                .font(.title3)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
