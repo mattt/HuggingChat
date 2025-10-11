@@ -5,7 +5,7 @@ import SwiftData
 struct App: SwiftUI.App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Chat.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

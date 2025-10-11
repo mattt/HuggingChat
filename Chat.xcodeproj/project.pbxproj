@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F816A38C2E9A81A900E4D8AC /* AnyLanguageModel in Frameworks */ = {isa = PBXBuildFile; productRef = F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F816A36B2E9A7F4200E4D8AC /* Chat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Chat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F816A38C2E9A81A900E4D8AC /* AnyLanguageModel in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Chat;
 			packageProductDependencies = (
+				F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */,
 			);
 			productName = Chat;
 			productReference = F816A36B2E9A7F4200E4D8AC /* Chat.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = F816A3622E9A7F4200E4D8AC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F816A38A2E9A81A900E4D8AC /* XCLocalSwiftPackageReference "../AnyLanguageModel" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F816A36C2E9A7F4200E4D8AC /* Products */;
 			projectDirPath = "";
@@ -351,6 +360,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F816A38A2E9A81A900E4D8AC /* XCLocalSwiftPackageReference "../AnyLanguageModel" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AnyLanguageModel;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AnyLanguageModel;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F816A3632E9A7F4200E4D8AC /* Project object */;
 }
