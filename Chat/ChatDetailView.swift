@@ -119,12 +119,26 @@ struct InputBarView: View {
                 .background(Color.primary.opacity(0.05))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .lineLimit(1 ... 10)
-                .onSubmit(onSend)
                 .disabled(isGenerating)
                 .focused($isFocused)
                 .onAppear {
                     isFocused = true
                 }
+                .onKeyPress { press in
+                    if press.key == .return {
+                        if press.modifiers.isEmpty {
+                            if !isGenerating && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                onSend()
+                                return .handled
+                            }
+                        } else if press.modifiers == [.shift] {
+                            _text.wrappedValue.append("\n")
+                            return .handled
+                        }
+                    }
+                    return .ignored
+                }
+                .glassEffectTransition(.materialize)
 
             HStack(spacing: 8) {
                 Menu {
