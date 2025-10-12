@@ -71,10 +71,11 @@ actor HuggingFaceOAuth {
                     }
 
                     // Extract code outside of actor context
-                    guard let code = URLComponents(string: url.absoluteString)?
-                        .queryItems?
-                        .first(where: { $0.name == "code" })?
-                        .value
+                    guard
+                        let code = URLComponents(string: url.absoluteString)?
+                            .queryItems?
+                            .first(where: { $0.name == "code" })?
+                            .value
                     else {
                         continuation.resume(throwing: OAuthError.invalidCallback)
                         return

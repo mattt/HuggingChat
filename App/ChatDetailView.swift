@@ -40,13 +40,13 @@ struct ChatDetailView: View {
                 text: $inputText,
                 isGenerating: viewModel.isGenerating,
                 chat: chat,
-                modelContext: modelContext
+                modelContext: modelContext,
+                viewModel: viewModel
             ) {
                 sendMessage()
             }
         }
         .navigationTitle(chat.title ?? "New Chat")
-        .navigationSubtitle(chat.model.displayName)
     }
 
     private func sendMessage() {
@@ -75,12 +75,7 @@ private struct MessageBubbleView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            if !message.isUser {
-                Image(systemName: "brain")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 32, height: 32)
-            } else {
+            if message.isUser {
                 Spacer()
             }
 
@@ -93,13 +88,9 @@ private struct MessageBubbleView: View {
                         : Color.primary.opacity(0.05)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(minWidth: 100)
 
-            if message.isUser {
-                Image(systemName: "person.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 32, height: 32)
-            } else {
+            if !message.isUser {
                 Spacer()
             }
         }
@@ -112,17 +103,19 @@ private struct InputBarView: View {
     let isGenerating: Bool
     let chat: Chat
     let modelContext: ModelContext
+    let viewModel: ChatViewModel
     let onSend: () -> Void
     @FocusState private var isFocused: Bool
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 12) {
+        VStack(spacing: 8) {
             TextField("Send a message", text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .padding(12)
                 .background(Color.primary.opacity(0.05))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .lineLimit(1 ... 10)
+                .frame(minWidth: 300)
                 .disabled(isGenerating)
                 .focused($isFocused)
                 .onAppear {
@@ -187,13 +180,21 @@ private struct InputBarView: View {
                 .menuStyle(.borderlessButton)
                 .fixedSize()
 
-                Button(action: onSend) {
-                    Image(systemName: "arrow.up.circle.fill")
+                Spacer()
+
+                Button {
+                    if isGenerating {
+                        viewModel.stopGenerating()
+                    } else {
+                        onSend()
+                    }
+                } label: {
+                    Image(systemName: isGenerating ? "stop.circle.fill" : "arrow.up.circle.fill")
                         .font(.title2)
                 }
                 .buttonStyle(.borderless)
                 .disabled(
-                    text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isGenerating
+                    !isGenerating && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 )
             }
         }
@@ -214,11 +215,6 @@ private struct InputBarView: View {
 private struct TypingIndicatorView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "brain")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-                .frame(width: 32, height: 32)
-
             Image(systemName: "ellipsis")
                 .symbolEffect(.variableColor.iterative.reversing, options: .repeat(.continuous))
                 .font(.title3)
@@ -226,6 +222,7 @@ private struct TypingIndicatorView: View {
                 .padding(12)
                 .background(Color.primary.opacity(0.05))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(minWidth: 100)
 
             Spacer()
         }

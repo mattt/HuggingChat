@@ -12,10 +12,17 @@ final class ChatViewModel {
     private let modelContext: ModelContext
     private var session: LanguageModelSession?
     private let authManager: AuthenticationManager?
+    private var currentTask: Task<Void, Never>?
 
     init(modelContext: ModelContext, authManager: AuthenticationManager? = nil) {
         self.modelContext = modelContext
         self.authManager = authManager
+    }
+
+    func stopGenerating() {
+        currentTask?.cancel()
+        currentTask = nil
+        isGenerating = false
     }
 
     func sendMessage(to chat: Chat, content: String) async {
@@ -35,7 +42,11 @@ final class ChatViewModel {
             return
         }
 
-        await generateResponse(for: chat)
+        currentTask = Task {
+            await generateResponse(for: chat)
+        }
+        await currentTask?.value
+        currentTask = nil
     }
 
     private func generateResponse(for chat: Chat) async {
@@ -44,6 +55,12 @@ final class ChatViewModel {
 
         do {
             let languageModel = try await chat.model.makeLanguageModel(authManager: authManager)
+
+            guard !Task.isCancelled else {
+                isGenerating = false
+                return
+            }
+
             let session = LanguageModelSession(model: languageModel)
             self.session = session
 
@@ -54,6 +71,11 @@ final class ChatViewModel {
                 .joined(separator: "\n\n")
 
             let response = try await session.respond(to: prompt)
+
+            guard !Task.isCancelled else {
+                isGenerating = false
+                return
+            }
 
             let assistantMessage = Message(content: response.content, isUser: false)
             assistantMessage.chat = chat
@@ -66,6 +88,8 @@ final class ChatViewModel {
             if chat.title == nil {
                 await generateTitle(for: chat)
             }
+        } catch is CancellationError {
+            print("Response generation cancelled")
         } catch {
             print("Error generating response: \(error)")
             await MainActor.run {
@@ -96,7 +120,7 @@ final class ChatViewModel {
                         """
 
                     let response = try await session.respond(to: titlePrompt)
-                    
+
                     let title = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
 
                     await MainActor.run {
@@ -105,9 +129,9 @@ final class ChatViewModel {
                     }
                 } catch {
                     print("Failed to generate title: \(error.localizedDescription)")
-//                    await MainActor.run {
-//                        self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
-//                    }
+                    //                    await MainActor.run {
+                    //                        self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
+                    //                    }
                 }
             }
         }

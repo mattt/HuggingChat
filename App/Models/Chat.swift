@@ -9,7 +9,7 @@ final class Chat {
     var updatedAt: Date
     private var modelType: String
     private var modelIdentifier: String?
-    
+
     @Transient
     var model: Model {
         get {
@@ -51,7 +51,7 @@ final class Chat {
         self.modelIdentifier = nil
         self.model = model
     }
-    
+
     func updateModel(_ newModel: Model) {
         self.model = newModel
         self.updatedAt = Date()
