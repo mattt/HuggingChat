@@ -13,10 +13,10 @@ struct NewChatDetailView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            Image(systemName: "face.smiling")
-                .font(.system(size: 60))
-                .foregroundStyle(.tertiary)
-                .padding(.bottom, 60)
+            Image("HuggingChat")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
 
             Spacer()
 
