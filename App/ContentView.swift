@@ -1,21 +1,33 @@
 import SwiftUI
 import SwiftData
 
+enum ChatSelection: Hashable {
+    case newChat
+    case existing(Chat)
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthenticationManager.self) private var authManager
     @Query(sort: \Chat.updatedAt, order: .reverse) private var chats: [Chat]
-    @State private var selectedChat: Chat?
+    @State private var selectedItem: ChatSelection? = .newChat
     @State private var viewModel: ChatViewModel?
 
     var body: some View {
         NavigationSplitView {
             if let viewModel {
-                ChatListView(selectedChat: $selectedChat, viewModel: viewModel)
+                ChatListView(selectedItem: $selectedItem, viewModel: viewModel)
             }
         } detail: {
-            if let selectedChat, let viewModel {
-                ChatDetailView(chat: selectedChat, viewModel: viewModel)
+            if let viewModel {
+                switch selectedItem {
+                case .newChat:
+                    NewChatDetailView(viewModel: viewModel, selectedItem: $selectedItem)
+                case .existing(let chat):
+                    ChatDetailView(chat: chat, viewModel: viewModel)
+                case nil:
+                    EmptyStateView()
+                }
             } else {
                 EmptyStateView()
             }
@@ -26,13 +38,7 @@ struct ContentView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
-            if let viewModel {
-                if let emptyChat = chats.first(where: { $0.messages.isEmpty }) {
-                    selectedChat = emptyChat
-                } else {
-                    selectedChat = viewModel.createNewChat()
-                }
-            }
+            selectedItem = .newChat
         }
     }
 }

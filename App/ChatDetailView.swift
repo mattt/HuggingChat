@@ -1,6 +1,58 @@
 import SwiftData
 import SwiftUI
 
+struct NewChatDetailView: View {
+    @Environment(\.modelContext) private var modelContext
+    let viewModel: ChatViewModel
+    @Binding var selectedItem: ChatSelection?
+
+    @State private var inputText = ""
+    @State private var selectedModel: Model = .system
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            Image(systemName: "face.smiling")
+                .font(.system(size: 60))
+                .foregroundStyle(.tertiary)
+                .padding(.bottom, 60)
+
+            Spacer()
+
+            Divider()
+
+            InputBarView(
+                text: $inputText,
+                isGenerating: false,
+                model: $selectedModel,
+                modelContext: modelContext
+            ) {
+                sendMessage()
+            }
+        }
+        .navigationTitle("New Chat")
+    }
+
+    private func sendMessage() {
+        let message = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !message.isEmpty else { return }
+
+        inputText = ""
+
+        // Create a new chat with the selected model
+        let chat = viewModel.createNewChat(model: selectedModel)
+
+        // Switch to the new chat
+        selectedItem = .existing(chat)
+
+        // Send the message
+        Task {
+            await viewModel.sendMessage(to: chat, content: message)
+        }
+    }
+}
+
 struct ChatDetailView: View {
     @Environment(\.modelContext) private var modelContext
     let chat: Chat
@@ -39,6 +91,7 @@ struct ChatDetailView: View {
             InputBarView(
                 text: $inputText,
                 isGenerating: viewModel.isGenerating,
+                model: .constant(chat.model),
                 chat: chat,
                 modelContext: modelContext,
                 viewModel: viewModel
@@ -101,9 +154,10 @@ private struct InputBarView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Binding var text: String
     let isGenerating: Bool
-    let chat: Chat
+    @Binding var model: Model
+    var chat: Chat?
     let modelContext: ModelContext
-    let viewModel: ChatViewModel
+    var viewModel: ChatViewModel?
     let onSend: () -> Void
     @FocusState private var isFocused: Bool
 
@@ -142,10 +196,14 @@ private struct InputBarView: View {
 
                 Menu {
                     Button {
-                        chat.updateModel(.system)
-                        try? modelContext.save()
+                        if let chat {
+                            chat.updateModel(.system)
+                            try? modelContext.save()
+                        } else {
+                            model = .system
+                        }
                     } label: {
-                        if chat.model == .system {
+                        if model == .system {
                             Label("Apple Intelligence", systemImage: "checkmark")
                         } else {
                             Text("Apple Intelligence")
@@ -157,11 +215,15 @@ private struct InputBarView: View {
 
                         ForEach(huggingFaceModels, id: \.0) { modelId, displayName in
                             Button {
-                                chat.updateModel(.huggingFace(modelId))
-                                try? modelContext.save()
+                                if let chat {
+                                    chat.updateModel(.huggingFace(modelId))
+                                    try? modelContext.save()
+                                } else {
+                                    model = .huggingFace(modelId)
+                                }
                             } label: {
                                 let isSelected =
-                                    if case .huggingFace(let selectedId) = chat.model {
+                                    if case .huggingFace(let selectedId) = model {
                                         selectedId == modelId
                                     } else {
                                         false
@@ -175,7 +237,7 @@ private struct InputBarView: View {
                         }
                     }
                 } label: {
-                    Text(chat.model.shortName)
+                    Text(model.shortName)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
@@ -184,7 +246,7 @@ private struct InputBarView: View {
                 .fixedSize()
 
                 Button {
-                    if isGenerating {
+                    if isGenerating, let viewModel {
                         viewModel.stopGenerating()
                     } else {
                         onSend()
