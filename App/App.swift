@@ -22,7 +22,7 @@ struct App: SwiftUI.App {
     }()
 
     @State private var authManager = AuthenticationManager(
-        clientID: "your_client_id_here",
+        clientID: "5d994e4f-e5fc-4572-ac85-af3fffbe0e75",
         redirectURI: "huggingchat://oauth/callback"
     )
 

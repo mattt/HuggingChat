@@ -5,14 +5,15 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>None</string>
+			<key>CFBundleURLName</key>
+			<string>co.dododo.HuggingChat.OAuth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>huggingchat</string>
 			</array>
-			<key>CFBundleURLName</key>
-			<string>co.huggingface.chat.oauth</string>
 		</dict>
 	</array>
 </dict>
 </plist>
-

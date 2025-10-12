@@ -166,8 +166,6 @@ private struct InputBarView: View {
 }
 
 private struct TypingIndicatorView: View {
-    @State private var dotCount = 0
-
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "brain")
@@ -175,33 +173,15 @@ private struct TypingIndicatorView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 32, height: 32)
 
-            HStack(spacing: 4) {
-                ForEach(0 ..< 3) { index in
-                    Circle()
-                        .fill(.secondary)
-                        .frame(width: 8, height: 8)
-                        .opacity(dotCount == index ? 1.0 : 0.3)
-                }
-            }
-            .padding(12)
-            .background(Color.primary.opacity(0.05))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .onAppear {
-                startAnimation()
-            }
+            Image(systemName: "ellipsis")
+                .symbolEffect(.variableColor.iterative.reversing, options: .repeat(.continuous))
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .padding(12)
+                .background(Color.primary.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Spacer()
-        }
-    }
-
-    private func startAnimation() {
-        Task {
-            while true {
-                try? await Task.sleep(for: .milliseconds(500))
-                await MainActor.run {
-                    dotCount = (dotCount + 1) % 3
-                }
-            }
         }
     }
 }
@@ -241,14 +221,6 @@ struct EmptyStateView: View {
                         }
                     }
 
-                    Image(systemName: "brain")
-                        .font(.system(size: 64))
-                        .foregroundStyle(.secondary)
-                        .padding(.top)
-
-                    Text("Select a chat or create a new one")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
 
                     Button("Sign Out") {
                         Task {
