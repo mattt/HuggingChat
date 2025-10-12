@@ -14,7 +14,7 @@ struct ChatListView: View {
                 Section(header: Text(dateGroup.title)) {
                     ForEach(groupedChats[dateGroup] ?? []) { chat in
                         NavigationLink(value: chat) {
-                            ChatRowView(chat: chat, isSelected: selectedChat?.id == chat.id)
+                            ChatRowView(chat: chat)
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -66,11 +66,10 @@ struct ChatListView: View {
 
 private struct ChatRowView: View {
     let chat: Chat
-    let isSelected: Bool
 
     var body: some View {
         Text(chat.title ?? "New Chat")
-            .font(isSelected ? .headline : .body)
+            .font(.body)
             .lineLimit(1)
             .foregroundStyle(chat.title == nil ? .tertiary : .primary)
             .padding(.vertical, 4)
