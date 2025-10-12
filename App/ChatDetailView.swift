@@ -150,23 +150,32 @@ private struct InputBarView: View {
                         chat.updateModel(.system)
                         try? modelContext.save()
                     } label: {
-                        Label("Apple Intelligence", systemImage: chat.model == .system ? "checkmark" : "")
+                        if chat.model == .system {
+                            Label("Apple Intelligence", systemImage: "checkmark")
+                        } else {
+                            Text("Apple Intelligence")
+                        }
                     }
-                    
+
                     if authManager.isAuthenticated {
                         Divider()
-                        
+
                         ForEach(huggingFaceModels, id: \.0) { modelId, displayName in
                             Button {
                                 chat.updateModel(.huggingFace(modelId))
                                 try? modelContext.save()
                             } label: {
-                                let isSelected = if case .huggingFace(let selectedId) = chat.model {
-                                    selectedId == modelId
+                                let isSelected =
+                                    if case .huggingFace(let selectedId) = chat.model {
+                                        selectedId == modelId
+                                    } else {
+                                        false
+                                    }
+                                if isSelected {
+                                    Label(displayName, systemImage: "checkmark")
                                 } else {
-                                    false
+                                    Text(displayName)
                                 }
-                                Label(displayName, systemImage: isSelected ? "checkmark" : "")
                             }
                         }
                     }
@@ -190,7 +199,7 @@ private struct InputBarView: View {
         }
         .padding()
     }
-    
+
     private var huggingFaceModels: [(String, String)] {
         [
             ("meta-llama/Llama-3.3-70B-Instruct", "Llama 3.3 70B"),
