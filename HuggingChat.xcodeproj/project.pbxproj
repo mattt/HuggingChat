@@ -14,9 +14,22 @@
 		F816A36B2E9A7F4200E4D8AC /* HuggingChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HuggingChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F88F64EA2E9BFFF700F89004 /* Exceptions for "App" folder in "HuggingChat" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F816A36A2E9A7F4200E4D8AC /* HuggingChat */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F816A36D2E9A7F4200E4D8AC /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F88F64EA2E9BFFF700F89004 /* Exceptions for "App" folder in "HuggingChat" target */,
+			);
 			path = App;
 			sourceTree = "<group>";
 		};
