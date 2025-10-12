@@ -138,6 +138,8 @@ private struct InputBarView: View {
                 .glassEffectTransition(.materialize)
 
             HStack(spacing: 8) {
+                Spacer()
+
                 Menu {
                     Button {
                         chat.updateModel(.system)
@@ -176,11 +178,10 @@ private struct InputBarView: View {
                     Text(chat.model.shortName)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
-
-                Spacer()
 
                 Button {
                     if isGenerating {
