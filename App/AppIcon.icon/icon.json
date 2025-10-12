@@ -1,0 +1,84 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : {
+        "automatic-gradient" : "srgb:1.00000,0.92326,0.74419,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : {
+        "linear-gradient" : [
+          "srgb:0.42011,0.29408,0.00000,1.00000",
+          "srgb:0.55683,0.44392,0.17461,1.00000"
+        ]
+      }
+    }
+  ],
+  "groups" : [
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "HuggingChat-Face.svg",
+          "name" : "HuggingChat-Face",
+          "position" : {
+            "scale" : 1.69,
+            "translation-in-points" : [
+              -10,
+              -6
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Foreground",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : "automatic",
+          "image-name" : "HuggingChat-Base.svg",
+          "name" : "HuggingChat-Base",
+          "position" : {
+            "scale" : 1.69,
+            "translation-in-points" : [
+              -8,
+              -6
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "name" : "Background",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
