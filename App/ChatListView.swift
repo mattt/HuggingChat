@@ -10,7 +10,7 @@ struct ChatListView: View {
 
     var body: some View {
         List(selection: $selectedChat) {
-            ForEach(groupedChats.keys.sorted(by: >), id: \.self) { dateGroup in
+            ForEach(groupedChats.keys.sorted(), id: \.self) { dateGroup in
                 Section(header: Text(dateGroup.title)) {
                     ForEach(groupedChats[dateGroup] ?? []) { chat in
                         NavigationLink(value: chat) {
