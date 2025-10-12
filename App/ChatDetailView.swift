@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct ChatDetailView: View {
+    @Environment(\.modelContext) private var modelContext
     let chat: Chat
     let viewModel: ChatViewModel
 
@@ -38,7 +39,8 @@ struct ChatDetailView: View {
             InputBarView(
                 text: $inputText,
                 isGenerating: viewModel.isGenerating,
-                selectedModel: chat.model
+                chat: chat,
+                modelContext: modelContext
             ) {
                 sendMessage()
             }
@@ -105,9 +107,11 @@ private struct MessageBubbleView: View {
 }
 
 private struct InputBarView: View {
+    @Environment(AuthenticationManager.self) private var authManager
     @Binding var text: String
     let isGenerating: Bool
-    let selectedModel: Model
+    let chat: Chat
+    let modelContext: ModelContext
     let onSend: () -> Void
     @FocusState private var isFocused: Bool
 
@@ -142,9 +146,32 @@ private struct InputBarView: View {
 
             HStack(spacing: 8) {
                 Menu {
-                    Text(selectedModel.displayName)
+                    Button {
+                        chat.updateModel(.system)
+                        try? modelContext.save()
+                    } label: {
+                        Label("Apple Intelligence", systemImage: chat.model == .system ? "checkmark" : "")
+                    }
+                    
+                    if authManager.isAuthenticated {
+                        Divider()
+                        
+                        ForEach(huggingFaceModels, id: \.0) { modelId, displayName in
+                            Button {
+                                chat.updateModel(.huggingFace(modelId))
+                                try? modelContext.save()
+                            } label: {
+                                let isSelected = if case .huggingFace(let selectedId) = chat.model {
+                                    selectedId == modelId
+                                } else {
+                                    false
+                                }
+                                Label(displayName, systemImage: isSelected ? "checkmark" : "")
+                            }
+                        }
+                    }
                 } label: {
-                    Text(selectedModel.shortName)
+                    Text(chat.model.shortName)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -162,6 +189,16 @@ private struct InputBarView: View {
             }
         }
         .padding()
+    }
+    
+    private var huggingFaceModels: [(String, String)] {
+        [
+            ("meta-llama/Llama-3.3-70B-Instruct", "Llama 3.3 70B"),
+            ("meta-llama/Llama-3.1-8B-Instruct", "Llama 3.1 8B"),
+            ("Qwen/Qwen2.5-72B-Instruct", "Qwen 2.5 72B"),
+            ("mistralai/Mistral-7B-Instruct-v0.3", "Mistral 7B"),
+            ("google/gemma-2-9b-it", "Gemma 2 9B"),
+        ]
     }
 }
 
@@ -221,7 +258,6 @@ struct EmptyStateView: View {
                         }
                     }
 
-
                     Button("Sign Out") {
                         Task {
                             await authManager.signOut()
@@ -280,12 +316,8 @@ private extension Model {
             return "Apple Intelligence"
         case .mlx(let modelId):
             return modelId
-        case .ollama(let model):
-            return "Ollama: \(model)"
-        case .openAI(let model):
-            return "OpenAI: \(model)"
-        case .anthropic(let model):
-            return "Anthropic: \(model)"
+        case .huggingFace(let model):
+            return "HuggingFace: \(model)"
         }
     }
 
@@ -295,12 +327,9 @@ private extension Model {
             return "System"
         case .mlx:
             return "MLX"
-        case .ollama(let model):
-            return model
-        case .openAI(let model):
-            return model
-        case .anthropic(let model):
-            return model
+        case .huggingFace(let model):
+            // Extract the model name after the last slash for brevity
+            return model.split(separator: "/").last.map(String.init) ?? model
         }
     }
 }

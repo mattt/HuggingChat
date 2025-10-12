@@ -17,7 +17,7 @@ actor HuggingFaceOAuth {
 
     func getValidToken() async throws -> OAuthToken {
         // Return cached token if valid
-        if let token = cachedToken, token.isValid {
+        if let token = cachedToken, await token.isValid {
             return token
         }
 
@@ -39,17 +39,20 @@ actor HuggingFaceOAuth {
         // Build authorization URL
         var components = URLComponents(string: "https://huggingface.co/oauth/authorize")!
         components.queryItems = [
-            URLQueryItem(name: "client_id", value: clientID),
-            URLQueryItem(name: "redirect_uri", value: redirectURI),
-            URLQueryItem(name: "response_type", value: "code"),
-            URLQueryItem(name: "scope", value: "openid profile email"),
-            URLQueryItem(name: "code_challenge", value: challenge),
-            URLQueryItem(name: "code_challenge_method", value: "S256"),
-            URLQueryItem(name: "state", value: generateState()),
+            .init(name: "client_id", value: clientID),
+            .init(name: "redirect_uri", value: redirectURI),
+            .init(name: "response_type", value: "code"),
+            .init(name: "scope", value: "openid profile email read-repos read-mcp inference-api"),
+            .init(name: "code_challenge", value: challenge),
+            .init(name: "code_challenge_method", value: "S256"),
+            .init(name: "state", value: generateState()),
         ]
 
-        let authURL = components.url!
-        let scheme = URLComponents(string: redirectURI)!.scheme!
+        guard let authURL = components.url,
+            let scheme = URLComponents(string: redirectURI)?.scheme
+        else {
+            throw OAuthError.sessionFailedToStart
+        }
 
         return try await withCheckedThrowingContinuation { continuation in
             Task { @MainActor in
@@ -62,8 +65,16 @@ actor HuggingFaceOAuth {
                         return
                     }
 
-                    guard let url = callbackURL,
-                        let code = self.extractCode(from: url)
+                    guard let url = callbackURL else {
+                        continuation.resume(throwing: OAuthError.invalidCallback)
+                        return
+                    }
+
+                    // Extract code outside of actor context
+                    guard let code = URLComponents(string: url.absoluteString)?
+                        .queryItems?
+                        .first(where: { $0.name == "code" })?
+                        .value
                     else {
                         continuation.resume(throwing: OAuthError.invalidCallback)
                         return
@@ -113,7 +124,9 @@ actor HuggingFaceOAuth {
             throw OAuthError.tokenExchangeFailed
         }
 
-        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+        let tokenResponse = try await Task {
+            try JSONDecoder().decode(TokenResponse.self, from: data)
+        }.value
         let token = OAuthToken(
             accessToken: tokenResponse.accessToken,
             refreshToken: tokenResponse.refreshToken,
@@ -138,7 +151,7 @@ actor HuggingFaceOAuth {
         refreshTask = task
 
         defer {
-            Task { await clearRefreshTask() }
+            Task { clearRefreshTask() }
         }
 
         return try await task.value
@@ -173,7 +186,9 @@ actor HuggingFaceOAuth {
             throw OAuthError.tokenExchangeFailed
         }
 
-        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+        let tokenResponse = try await Task {
+            try JSONDecoder().decode(TokenResponse.self, from: data)
+        }.value
         let token = OAuthToken(
             accessToken: tokenResponse.accessToken,
             refreshToken: tokenResponse.refreshToken ?? refreshToken,

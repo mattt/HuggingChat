@@ -101,6 +101,8 @@ class AuthenticationManager {
 
         } catch {
             print("Failed to load stored token: \(error)")
+            // Clear invalid token from keychain
+            try? KeychainStorage.delete(account: accountIdentifier)
         }
     }
 

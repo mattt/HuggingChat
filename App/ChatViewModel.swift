@@ -11,9 +11,11 @@ final class ChatViewModel {
 
     private let modelContext: ModelContext
     private var session: LanguageModelSession?
+    private let authManager: AuthenticationManager?
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, authManager: AuthenticationManager? = nil) {
         self.modelContext = modelContext
+        self.authManager = authManager
     }
 
     func sendMessage(to chat: Chat, content: String) async {
@@ -41,7 +43,7 @@ final class ChatViewModel {
         errorMessage = nil
 
         do {
-            let languageModel = chat.model.makeLanguageModel()
+            let languageModel = try await chat.model.makeLanguageModel(authManager: authManager)
             let session = LanguageModelSession(model: languageModel)
             self.session = session
 
@@ -61,12 +63,14 @@ final class ChatViewModel {
             modelContext.insert(assistantMessage)
             try modelContext.save()
 
-            let isFirstResponse = chat.messages.filter { !$0.isUser }.count == 1
-            if isFirstResponse && chat.title == nil {
+            if chat.title == nil {
                 await generateTitle(for: chat)
             }
         } catch {
-            errorMessage = "Failed to generate response: \(error.localizedDescription)"
+            print("Error generating response: \(error)")
+            await MainActor.run {
+                self.errorMessage = "Failed to generate response: \(error.localizedDescription)"
+            }
         }
 
         isGenerating = false
@@ -92,15 +96,18 @@ final class ChatViewModel {
                         """
 
                     let response = try await session.respond(to: titlePrompt)
+                    
+                    let title = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
 
                     await MainActor.run {
-                        chat.title = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                        chat.title = title
                         try? self.modelContext.save()
                     }
                 } catch {
-                    await MainActor.run {
-                        self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
-                    }
+                    print("Failed to generate title: \(error.localizedDescription)")
+//                    await MainActor.run {
+//                        self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
+//                    }
                 }
             }
         }
@@ -131,24 +138,33 @@ final class ChatViewModel {
 }
 
 extension Model {
-    func makeLanguageModel() -> any LanguageModel {
+    func makeLanguageModel(authManager: AuthenticationManager?) async throws -> any LanguageModel {
         switch self {
         case .system:
             return SystemLanguageModel()
         case .mlx(let modelId):
             return MLXLanguageModel(modelId: modelId)
-        case .ollama(let model):
-            return OllamaLanguageModel(model: model)
-        case .openAI(let model):
-            guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] else {
-                fatalError("OPENAI_API_KEY not set")
+        case .huggingFace(let model):
+            guard let authManager = authManager else {
+                throw ModelError.authenticationRequired
             }
-            return OpenAILanguageModel(apiKey: apiKey, model: model)
-        case .anthropic(let model):
-            guard let apiKey = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] else {
-                fatalError("ANTHROPIC_API_KEY not set")
-            }
-            return AnthropicLanguageModel(apiKey: apiKey, model: model)
+            let token = try await authManager.getValidToken()
+            return OpenAILanguageModel(
+                baseURL: URL(string: "https://router.huggingface.co/v1")!,
+                apiKey: token,
+                model: model
+            )
+        }
+    }
+}
+
+enum ModelError: LocalizedError {
+    case authenticationRequired
+
+    var errorDescription: String? {
+        switch self {
+        case .authenticationRequired:
+            return "Authentication required to use HuggingFace models. Please sign in."
         }
     }
 }

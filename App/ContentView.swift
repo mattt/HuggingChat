@@ -3,6 +3,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AuthenticationManager.self) private var authManager
     @Query(sort: \Chat.updatedAt, order: .reverse) private var chats: [Chat]
     @State private var selectedChat: Chat?
     @State private var viewModel: ChatViewModel?
@@ -21,7 +22,7 @@ struct ContentView: View {
         }
         .onAppear {
             if viewModel == nil {
-                viewModel = ChatViewModel(modelContext: modelContext)
+                viewModel = ChatViewModel(modelContext: modelContext, authManager: authManager)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
