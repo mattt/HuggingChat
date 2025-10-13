@@ -103,6 +103,7 @@ final class ChatViewModel {
     }
 
     private func generateTitle(for chat: Chat) async {
+        guard #available(macOS 26, iOS 26, visionOS 26, *) else { return }
         do {
             let systemModel = SystemLanguageModel()
             let session = LanguageModelSession(model: systemModel)
@@ -167,6 +168,9 @@ extension Model {
     func makeLanguageModel(authManager: AuthenticationManager?) async throws -> any LanguageModel {
         switch self {
         case .system:
+            guard #available(macOS 26, iOS 26, visionOS 26, *) else {
+                throw ModelError.notSupported
+            }
             return SystemLanguageModel()
         case .mlx(let modelId):
             return MLXLanguageModel(modelId: modelId)
@@ -186,11 +190,14 @@ extension Model {
 
 enum ModelError: LocalizedError {
     case authenticationRequired
+    case notSupported
 
     var errorDescription: String? {
         switch self {
         case .authenticationRequired:
             return "Authentication required to use HuggingFace models. Please sign in."
+        case .notSupported:
+            return "The requested model is not supported on this OS version."
         }
     }
 }
