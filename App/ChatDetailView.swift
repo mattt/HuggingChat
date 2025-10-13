@@ -213,9 +213,9 @@ private struct InputBarView: View {
 
                     if authManager.isAuthenticated {
                         Divider()
-                        
+
                         Text("HuggingFace Inference")
-                        
+
                         ForEach(huggingFaceModels, id: \.id) { model in
                             Button {
                                 if let chat {
@@ -295,7 +295,6 @@ private struct TypingIndicatorView: View {
         }
     }
 }
-
 
 private extension Model {
     var displayName: String {

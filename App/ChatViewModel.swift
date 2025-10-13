@@ -121,7 +121,11 @@ final class ChatViewModel {
 
                     let response = try await session.respond(to: titlePrompt)
 
-                    let title = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let title = response.content
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .trimmingCharacters(
+                            in: CharacterSet(charactersIn: "\"")
+                        )
 
                     await MainActor.run {
                         chat.title = title
