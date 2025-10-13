@@ -203,35 +203,39 @@ private struct InputBarView: View {
                             model = .system
                         }
                     } label: {
+                        Image(systemName: "apple.logo")
+                        Text("Apple Intelligence")
+                        Text("System Foundation Model")
                         if model == .system {
-                            Label("Apple Intelligence", systemImage: "checkmark")
-                        } else {
-                            Text("Apple Intelligence")
+                            Image(systemName: "checkmark")
                         }
                     }
 
                     if authManager.isAuthenticated {
                         Divider()
-
-                        ForEach(huggingFaceModels, id: \.0) { modelId, displayName in
+                        
+                        Text("HuggingFace Inference")
+                        
+                        ForEach(huggingFaceModels, id: \.id) { model in
                             Button {
                                 if let chat {
-                                    chat.updateModel(.huggingFace(modelId))
+                                    chat.updateModel(.huggingFace(model.id))
                                     try? modelContext.save()
                                 } else {
-                                    model = .huggingFace(modelId)
+                                    self.model = .huggingFace(model.id)
                                 }
                             } label: {
+                                Image(systemName: "bolt.fill")
+                                Text(model.name)
+                                Text(model.id)
                                 let isSelected =
-                                    if case .huggingFace(let selectedId) = model {
-                                        selectedId == modelId
+                                    if case .huggingFace(let selectedId) = self.model {
+                                        selectedId == model.id
                                     } else {
                                         false
                                     }
                                 if isSelected {
-                                    Label(displayName, systemImage: "checkmark")
-                                } else {
-                                    Text(displayName)
+                                    Image(systemName: "checkmark")
                                 }
                             }
                         }
@@ -264,13 +268,13 @@ private struct InputBarView: View {
         .padding()
     }
 
-    private var huggingFaceModels: [(String, String)] {
+    private var huggingFaceModels: [(id: String, name: String)] {
         [
-            ("meta-llama/Llama-3.3-70B-Instruct", "Llama 3.3 70B"),
-            ("meta-llama/Llama-3.1-8B-Instruct", "Llama 3.1 8B"),
-            ("Qwen/Qwen2.5-72B-Instruct", "Qwen 2.5 72B"),
-            ("mistralai/Mistral-7B-Instruct-v0.3", "Mistral 7B"),
-            ("google/gemma-2-9b-it", "Gemma 2 9B"),
+            (id: "meta-llama/Llama-3.3-70B-Instruct", name: "Llama 3.3 70B"),
+            (id: "meta-llama/Llama-3.1-8B-Instruct", name: "Llama 3.1 8B"),
+            (id: "Qwen/Qwen2.5-72B-Instruct", name: "Qwen 2.5 72B"),
+            (id: "mistralai/Mistral-7B-Instruct-v0.3", name: "Mistral 7B"),
+            (id: "google/gemma-2-9b-it", name: "Gemma 2 9B"),
         ]
     }
 }
@@ -393,7 +397,7 @@ private extension Model {
     var shortName: String {
         switch self {
         case .system:
-            return "System"
+            return "Apple Intelligence"
         case .mlx:
             return "MLX"
         case .huggingFace(let model):
