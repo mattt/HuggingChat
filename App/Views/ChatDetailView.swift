@@ -34,26 +34,14 @@ struct ChatDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
-                List {
-                    ForEach(chat.messages, id: \.id) { message in
-                        MessageBubbleView(message: message)
-                            .id(message.id)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .onAppear {
-                                // Save the last visible message
-                                saveScrollPosition(messageId: message.id)
-                            }
+                ConversationView(
+                    messages: chat.messages,
+                    isGenerating: viewModel.isGenerating,
+                    onMessageAppear: { id in
+                        // Save the last visible message
+                        saveScrollPosition(messageId: id)
                     }
-
-                    if viewModel.isGenerating {
-                        TypingIndicatorView()
-                            .id("typing-indicator")
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    }
-                }
-                .listStyle(.plain)
+                )
                 .onChange(of: chat.id, initial: true) { _, _ in
                     scrollProxy = proxy
                     // Scroll immediately when chat changes
@@ -158,15 +146,56 @@ struct TypingIndicatorView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "ellipsis")
-                .symbolEffect(.variableColor.iterative.reversing, options: .repeat(.continuous))
+                .symbolEffect(.variableColor)
                 .font(.title)
                 .foregroundStyle(.secondary)
-                .padding(12)
-                .background(Color.primary.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .frame(minWidth: 100)
+                .padding()
 
             Spacer()
         }
     }
 }
+
+struct PresentedMessage: Identifiable, Hashable {
+    let id: UUID
+    let content: String
+    let isUser: Bool
+}
+
+struct ConversationView: View {
+    let messages: [Message]
+    let isGenerating: Bool
+    var onMessageAppear: (UUID) -> Void = { _ in }
+
+    var body: some View {
+        List {
+            ForEach(messages, id: \.self) { message in
+                MessageBubbleView(message: message)
+                    .onAppear { onMessageAppear(message.id) }
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            }
+
+            if isGenerating {
+                TypingIndicatorView()
+                    .id("typing-indicator")
+                    .listRowSeparator(.hidden)
+                //                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            }
+        }
+        .listStyle(.plain)
+    }
+}
+
+#if DEBUG
+    #Preview {
+        let messages: [Message] = [
+            .init(content: "Hello!", isUser: true),
+            .init(content: "Hi there — how can I help you today?", isUser: false),
+            .init(content: "Tell me a quick joke.", isUser: true),
+        ]
+
+        ConversationView(messages: messages, isGenerating: true)
+            .frame(width: 800, height: 500)
+    }
+#endif
