@@ -86,7 +86,9 @@ final class ChatViewModel {
             try modelContext.save()
 
             if chat.title == nil {
-                await generateTitle(for: chat)
+                Task {
+                    await generateTitle(for: chat)
+                }
             }
         } catch is CancellationError {
             print("Response generation cancelled")
@@ -101,43 +103,39 @@ final class ChatViewModel {
     }
 
     private func generateTitle(for chat: Chat) async {
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                do {
-                    let systemModel = SystemLanguageModel()
-                    let session = LanguageModelSession(model: systemModel)
+        do {
+            let systemModel = SystemLanguageModel()
+            let session = LanguageModelSession(model: systemModel)
 
-                    let conversationText = chat.messages
-                        .map { "\($0.isUser ? "User" : "Assistant"): \($0.content)" }
-                        .joined(separator: "\n")
+            let conversationText = chat.messages
+                .map { "\($0.isUser ? "User" : "Assistant"): \($0.content)" }
+                .joined(separator: "\n")
 
-                    let titlePrompt = """
-                        Generate a short, concise title (5 words or less) for this conversation:
+            let titlePrompt = """
+                Generate a short, concise title (5 words or less) for this conversation:
 
-                        \(conversationText)
+                \(conversationText)
 
-                        Return only the title, nothing else.
-                        """
+                Return only the title, nothing else.
+                """
 
-                    let response = try await session.respond(to: titlePrompt)
+            let response = try await session.respond(to: titlePrompt)
 
-                    let title = response.content
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                        .trimmingCharacters(
-                            in: CharacterSet(charactersIn: "\"")
-                        )
+            let title = response.content
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(
+                    in: CharacterSet(charactersIn: "\"")
+                )
 
-                    await MainActor.run {
-                        chat.title = title
-                        try? self.modelContext.save()
-                    }
-                } catch {
-                    print("Failed to generate title: \(error.localizedDescription)")
-                    //                    await MainActor.run {
-                    //                        self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
-                    //                    }
-                }
+            await MainActor.run {
+                chat.title = title
+                try? self.modelContext.save()
             }
+        } catch {
+            print("Failed to generate title: \(error.localizedDescription)")
+            //            await MainActor.run {
+            //                self.errorMessage = "Failed to generate title: \(error.localizedDescription)"
+            //            }
         }
     }
 
