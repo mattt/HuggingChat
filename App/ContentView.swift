@@ -20,16 +20,13 @@ struct ContentView: View {
             }
         } detail: {
             if let viewModel {
-                switch selectedItem {
-                case .newChat:
-                    NewChatDetailView(viewModel: viewModel, selectedItem: $selectedItem)
-                case .existing(let chat):
+                if case let .existing(chat) = selectedItem {
                     ChatDetailView(chat: chat, viewModel: viewModel)
-                case nil:
-                    EmptyStateView()
+                } else {
+                    NewChatDetailView(viewModel: viewModel, selectedItem: $selectedItem)
                 }
             } else {
-                EmptyStateView()
+                EmptyView()
             }
         }
         .onAppear {
