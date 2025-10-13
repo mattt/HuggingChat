@@ -125,9 +125,9 @@ actor HuggingFaceOAuth {
             throw OAuthError.tokenExchangeFailed
         }
 
-        let tokenResponse = try await Task {
+        let tokenResponse = try await MainActor.run {
             try JSONDecoder().decode(TokenResponse.self, from: data)
-        }.value
+        }
         let token = OAuthToken(
             accessToken: tokenResponse.accessToken,
             refreshToken: tokenResponse.refreshToken,
@@ -187,9 +187,9 @@ actor HuggingFaceOAuth {
             throw OAuthError.tokenExchangeFailed
         }
 
-        let tokenResponse = try await Task {
+        let tokenResponse = try await MainActor.run {
             try JSONDecoder().decode(TokenResponse.self, from: data)
-        }.value
+        }
         let token = OAuthToken(
             accessToken: tokenResponse.accessToken,
             refreshToken: tokenResponse.refreshToken ?? refreshToken,
