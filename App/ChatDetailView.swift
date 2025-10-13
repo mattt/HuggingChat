@@ -61,28 +61,69 @@ struct ChatDetailView: View {
     @State private var inputText = ""
     @State private var scrollProxy: ScrollViewProxy?
 
+    private let initialScrollTarget: UUID?
+
+    private var scrollPositionKey: String {
+        "scrollPosition_\(chat.id)"
+    }
+
+    init(chat: Chat, viewModel: ChatViewModel) {
+        self.chat = chat
+        self.viewModel = viewModel
+
+        // Calculate initial scroll target
+        let key = "scrollPosition_\(chat.id)"
+        if let savedPositionString = UserDefaults.standard.string(forKey: key),
+            let savedPositionId = UUID(uuidString: savedPositionString),
+            chat.messages.contains(where: { $0.id == savedPositionId })
+        {
+            self.initialScrollTarget = savedPositionId
+        } else {
+            self.initialScrollTarget = chat.messages.last?.id
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(chat.messages) { message in
-                            MessageBubbleView(message: message)
-                                .id(message.id)
-                        }
-
-                        if viewModel.isGenerating {
-                            TypingIndicatorView()
-                        }
+                List {
+                    ForEach(chat.messages, id: \.id) { message in
+                        MessageBubbleView(message: message)
+                            .id(message.id)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .onAppear {
+                                // Save the last visible message
+                                saveScrollPosition(messageId: message.id)
+                            }
                     }
-                    .padding()
+
+                    if viewModel.isGenerating {
+                        TypingIndicatorView()
+                            .id("typing-indicator")
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    }
                 }
-                .onAppear {
+                .listStyle(.plain)
+                .onChange(of: chat.id, initial: true) { _, _ in
                     scrollProxy = proxy
-                    scrollToBottom()
+                    // Scroll immediately when chat changes
+                    if let target = initialScrollTarget {
+                        proxy.scrollTo(target, anchor: .top)
+                    }
                 }
-                .onChange(of: chat.messages.count) { _, _ in
-                    scrollToBottom()
+                .onChange(of: chat.messages.count) { oldCount, newCount in
+                    // When new messages are added, scroll to reveal them with animation
+                    if newCount > oldCount {
+                        scrollToBottomAnimated()
+                    }
+                }
+                .onChange(of: viewModel.isGenerating) { wasGenerating, isGenerating in
+                    // When generation starts, scroll to show the typing indicator
+                    if isGenerating && !wasGenerating {
+                        scrollToTypingIndicatorAnimated()
+                    }
                 }
             }
 
@@ -113,13 +154,28 @@ struct ChatDetailView: View {
         }
     }
 
-    private func scrollToBottom() {
+    private func scrollToBottomAnimated() {
         guard let lastMessage = chat.messages.last else { return }
 
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(100))
-            scrollProxy?.scrollTo(lastMessage.id, anchor: .bottom)
+            try? await Task.sleep(for: .milliseconds(50))
+            withAnimation(.easeInOut(duration: 0.3)) {
+                scrollProxy?.scrollTo(lastMessage.id, anchor: .bottom)
+            }
         }
+    }
+
+    private func scrollToTypingIndicatorAnimated() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(50))
+            withAnimation(.easeInOut(duration: 0.3)) {
+                scrollProxy?.scrollTo("typing-indicator", anchor: .bottom)
+            }
+        }
+    }
+
+    private func saveScrollPosition(messageId: UUID) {
+        UserDefaults.standard.set(messageId.uuidString, forKey: scrollPositionKey)
     }
 }
 
