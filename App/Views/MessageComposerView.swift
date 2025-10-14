@@ -31,6 +31,7 @@ struct MessageComposerView: View {
                     if press.key == .return {
                         if press.modifiers.isEmpty {
                             if !isGenerating && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                selection = nil
                                 onSend()
                                 return .handled
                             }
@@ -105,6 +106,7 @@ struct MessageComposerView: View {
                     if isGenerating, let viewModel {
                         viewModel.stopGenerating()
                     } else {
+                        selection = nil
                         onSend()
                     }
                 } label: {
