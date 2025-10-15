@@ -70,19 +70,54 @@ final class ChatViewModel {
                 }
                 .joined(separator: "\n\n")
 
-            let response = try await session.respond(to: prompt)
+            // Create an assistant message immediately and update its content as we stream
+            let assistantMessage = Message(content: "", isUser: false)
+            assistantMessage.chat = chat
+            chat.messages.append(assistantMessage)
+            chat.updatedAt = Date()
+
+            modelContext.insert(assistantMessage)
+
+            var receivedAnyStreamContent = false
+
+            // Prefer streaming response when available
+            let stream = session.streamResponse(to: prompt)
+            do {
+                var lastLength = 0
+                for try await snapshot in stream {
+                    guard !Task.isCancelled else { break }
+                    receivedAnyStreamContent = true
+                    // Materialize a concrete String from the raw content.
+                    let full = (try? String(snapshot.rawContent)) ?? assistantMessage.content
+                    // Append only the new delta to avoid duplication when snapshots are cumulative.
+                    if full.count >= lastLength {
+                        let startIdx = full.index(full.startIndex, offsetBy: lastLength)
+                        let delta = String(full[startIdx...])
+                        assistantMessage.content += delta
+                        lastLength = full.count
+                    } else {
+                        // If content shrank (rare), reset to full.
+                        assistantMessage.content = full
+                        lastLength = full.count
+                    }
+                    chat.updatedAt = Date()
+                }
+            } catch is CancellationError {
+                // Propagate cancellation handling below
+            }
+
+            // Fallback to non-streaming if no streamed content arrived (e.g., model doesn't support streaming)
+            if !receivedAnyStreamContent && !Task.isCancelled {
+                let response = try await session.respond(to: prompt)
+                assistantMessage.content = response.content
+                chat.updatedAt = Date()
+            }
 
             guard !Task.isCancelled else {
                 isGenerating = false
                 return
             }
 
-            let assistantMessage = Message(content: response.content, isUser: false)
-            assistantMessage.chat = chat
-            chat.messages.append(assistantMessage)
-            chat.updatedAt = Date()
-
-            modelContext.insert(assistantMessage)
             try modelContext.save()
 
             if chat.title == nil {
@@ -122,10 +157,7 @@ final class ChatViewModel {
             let response = try await session.respond(to: titlePrompt)
 
             let title = response.content
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .trimmingCharacters(
-                    in: CharacterSet(charactersIn: "\"")
-                )
+                .trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
 
             await MainActor.run {
                 chat.title = title

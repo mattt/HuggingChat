@@ -1,6 +1,8 @@
 import SwiftData
 import SwiftUI
 
+fileprivate let bottomSentinelID = "bottom-sentinel"
+
 struct ChatDetailView: View {
     @Environment(\.modelContext) private var modelContext
     let chat: Chat
@@ -46,7 +48,9 @@ struct ChatDetailView: View {
                     scrollProxy = proxy
                     // Scroll immediately when chat changes
                     if let target = initialScrollTarget {
-                        proxy.scrollTo(target, anchor: .top)
+                        proxy.scrollTo(target, anchor: .bottom)
+                    } else {
+                        proxy.scrollTo(bottomSentinelID, anchor: .bottom)
                     }
                 }
                 .onChange(of: chat.messages.count) { oldCount, newCount in
@@ -54,6 +58,10 @@ struct ChatDetailView: View {
                     if newCount > oldCount {
                         scrollToBottomAnimated()
                     }
+                }
+                .onChange(of: chat.messages.last?.content) {
+                    print("ON CHANGE LAST MESSAGE")
+                    scrollToBottomAnimated()
                 }
                 .onChange(of: viewModel.isGenerating) { wasGenerating, isGenerating in
                     // When generation starts, scroll to show the typing indicator
@@ -91,12 +99,10 @@ struct ChatDetailView: View {
     }
 
     private func scrollToBottomAnimated() {
-        guard let lastMessage = chat.messages.last else { return }
-
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50))
             withAnimation(.easeInOut(duration: 0.3)) {
-                scrollProxy?.scrollTo(lastMessage.id, anchor: .bottom)
+                scrollProxy?.scrollTo(bottomSentinelID, anchor: .bottom)
             }
         }
     }
@@ -105,7 +111,7 @@ struct ChatDetailView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50))
             withAnimation(.easeInOut(duration: 0.3)) {
-                scrollProxy?.scrollTo("typing-indicator", anchor: .bottom)
+                scrollProxy?.scrollTo(bottomSentinelID, anchor: .bottom)
             }
         }
     }
@@ -169,7 +175,7 @@ struct ConversationView: View {
 
     var body: some View {
         List {
-            ForEach(messages, id: \.self) { message in
+            ForEach(messages, id: \.id) { message in
                 MessageBubbleView(message: message)
                     .onAppear { onMessageAppear(message.id) }
                     .listRowSeparator(.hidden)
@@ -182,6 +188,12 @@ struct ConversationView: View {
                     .listRowSeparator(.hidden)
                 //                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
+
+            // Persistent bottom sentinel to ensure reliable scrolling to end
+            Color.clear
+                .frame(height: 1)
+                .id(bottomSentinelID)
+                .listRowSeparator(.hidden)
         }
         .listStyle(.plain)
     }

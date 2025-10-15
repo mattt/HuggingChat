@@ -47,6 +47,15 @@
       }
     },
     {
+      "identity" : "partialjsondecoder",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mattt/PartialJSONDecoder.git",
+      "state" : {
+        "revision" : "e4d389e6bcc6771bb988d1a8a17695d8bfa97172",
+        "version" : "1.0.0"
+      }
+    },
+    {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
