@@ -37,6 +37,8 @@ final class ChatViewModel {
 
         do {
             try modelContext.save()
+            // Avoid a large batch of UI updates landing at once by yielding once
+            await Task.yield()
         } catch {
             errorMessage = "Failed to save message: \(error.localizedDescription)"
             return
@@ -54,6 +56,7 @@ final class ChatViewModel {
         errorMessage = nil
 
         do {
+            var assistantMessage: Message?
             let languageModel = try await chat.model.makeLanguageModel(authManager: authManager)
 
             guard !Task.isCancelled else {
@@ -71,12 +74,13 @@ final class ChatViewModel {
                 .joined(separator: "\n\n")
 
             // Create an assistant message immediately and update its content as we stream
-            let assistantMessage = Message(content: "", isUser: false)
-            assistantMessage.chat = chat
-            chat.messages.append(assistantMessage)
+            let createdAssistantMessage = Message(content: "", isUser: false)
+            createdAssistantMessage.chat = chat
+            chat.messages.append(createdAssistantMessage)
             chat.updatedAt = Date()
 
-            modelContext.insert(assistantMessage)
+            modelContext.insert(createdAssistantMessage)
+            assistantMessage = createdAssistantMessage
 
             var receivedAnyStreamContent = false
 
@@ -88,32 +92,56 @@ final class ChatViewModel {
                     guard !Task.isCancelled else { break }
                     receivedAnyStreamContent = true
                     // Materialize a concrete String from the raw content.
-                    let full = (try? String(snapshot.rawContent)) ?? assistantMessage.content
+                    let full = (try? String(snapshot.rawContent)) ?? (assistantMessage?.content ?? "")
                     // Append only the new delta to avoid duplication when snapshots are cumulative.
                     if full.count >= lastLength {
                         let startIdx = full.index(full.startIndex, offsetBy: lastLength)
                         let delta = String(full[startIdx...])
-                        assistantMessage.content += delta
+                        assistantMessage?.content += delta
                         lastLength = full.count
                     } else {
                         // If content shrank (rare), reset to full.
-                        assistantMessage.content = full
+                        assistantMessage?.content = full
                         lastLength = full.count
                     }
                     chat.updatedAt = Date()
                 }
             } catch is CancellationError {
-                // Propagate cancellation handling below
+                // On cancel, persist partial content if any; remove message if still empty
+                if let msg = assistantMessage {
+                    if msg.content.isEmpty {
+                        // Remove empty assistant message
+                        if let index = chat.messages.firstIndex(where: { $0.id == msg.id }) {
+                            chat.messages.remove(at: index)
+                        }
+                        modelContext.delete(msg)
+                    } else {
+                        try? modelContext.save()
+                    }
+                }
+                isGenerating = false
+                return
             }
 
             // Fallback to non-streaming if no streamed content arrived (e.g., model doesn't support streaming)
             if !receivedAnyStreamContent && !Task.isCancelled {
                 let response = try await session.respond(to: prompt)
-                assistantMessage.content = response.content
+                assistantMessage?.content = response.content
                 chat.updatedAt = Date()
             }
 
             guard !Task.isCancelled else {
+                // On cancel after streaming, same policy: keep partial, remove empty
+                if let msg = assistantMessage {
+                    if msg.content.isEmpty {
+                        if let index = chat.messages.firstIndex(where: { $0.id == msg.id }) {
+                            chat.messages.remove(at: index)
+                        }
+                        modelContext.delete(msg)
+                    } else {
+                        try? modelContext.save()
+                    }
+                }
                 isGenerating = false
                 return
             }

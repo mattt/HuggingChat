@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 
 fileprivate let bottomSentinelID = "bottom-sentinel"
+fileprivate let topSentinelID = "top-sentinel"
 
 struct ChatDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -10,6 +11,12 @@ struct ChatDetailView: View {
 
     @State private var inputText = ""
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var isAtBottom = false
+    @State private var isTopVisible = false
+    @State private var currentScrollPhase: ScrollPhase = .idle
+
+    private var contentFitsViewport: Bool { isAtBottom && isTopVisible }
+    private var isUserScrolling: Bool { currentScrollPhase != .idle }
 
     private let initialScrollTarget: UUID?
 
@@ -37,30 +44,40 @@ struct ChatDetailView: View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ConversationView(
-                    messages: chat.messages,
+                    messages: chat.messages.sorted(by: { $0.timestamp < $1.timestamp }),
                     isGenerating: viewModel.isGenerating,
                     onMessageAppear: { id in
                         // Save the last visible message
                         saveScrollPosition(messageId: id)
+                    },
+                    onBottomVisibilityChange: { isVisible in
+                        isAtBottom = isVisible
+                    },
+                    onTopVisibilityChange: { isVisible in
+                        isTopVisible = isVisible
+                    },
+                    onScrollPhaseChange: { phase in
+                        currentScrollPhase = phase
                     }
                 )
                 .onChange(of: chat.id, initial: true) { _, _ in
                     scrollProxy = proxy
                     // Scroll immediately when chat changes
-                    if let target = initialScrollTarget {
-                        proxy.scrollTo(target, anchor: .bottom)
-                    } else {
-                        proxy.scrollTo(bottomSentinelID, anchor: .bottom)
+                    if !contentFitsViewport && !isUserScrolling {
+                        if let target = initialScrollTarget {
+                            proxy.scrollTo(target, anchor: .bottom)
+                        } else {
+                            proxy.scrollTo(bottomSentinelID, anchor: .bottom)
+                        }
                     }
                 }
-                .onChange(of: chat.messages.count) { oldCount, newCount in
-                    // When new messages are added, scroll to reveal them with animation
-                    if newCount > oldCount {
-                        scrollToBottomAnimated()
-                    }
-                }
+                //                .onChange(of: chat.messages.count) { oldCount, newCount in
+                //                    // When new messages are added, scroll to reveal them with animation
+                //                    if newCount > oldCount {
+                //                        scrollToBottomAnimated()
+                //                    }
+                //                }
                 .onChange(of: chat.messages.last?.content) {
-                    print("ON CHANGE LAST MESSAGE")
                     scrollToBottomAnimated()
                 }
                 .onChange(of: viewModel.isGenerating) { wasGenerating, isGenerating in
@@ -99,6 +116,8 @@ struct ChatDetailView: View {
     }
 
     private func scrollToBottomAnimated() {
+        // Only autoscroll when user is at bottom and content does not already fit
+        if !isAtBottom || contentFitsViewport || isUserScrolling { return }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50))
             withAnimation(.easeInOut(duration: 0.3)) {
@@ -111,7 +130,9 @@ struct ChatDetailView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(50))
             withAnimation(.easeInOut(duration: 0.3)) {
-                scrollProxy?.scrollTo(bottomSentinelID, anchor: .bottom)
+                if isAtBottom && !contentFitsViewport && !isUserScrolling {
+                    scrollProxy?.scrollTo(bottomSentinelID, anchor: .bottom)
+                }
             }
         }
     }
@@ -140,6 +161,7 @@ private struct MessageBubbleView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .frame(minWidth: 100)
+                .opacity(message.content.isEmpty ? 0 : 1)
 
             if !message.isUser {
                 Spacer()
@@ -172,9 +194,20 @@ struct ConversationView: View {
     let messages: [Message]
     let isGenerating: Bool
     var onMessageAppear: (UUID) -> Void = { _ in }
+    var onBottomVisibilityChange: (Bool) -> Void = { _ in }
+    var onTopVisibilityChange: (Bool) -> Void = { _ in }
+    var onScrollPhaseChange: (ScrollPhase) -> Void = { _ in }
 
     var body: some View {
         List {
+            // Top sentinel to detect if entire content fits in viewport
+            Color.clear
+                .frame(height: 1)
+                .id(topSentinelID)
+                .listRowSeparator(.hidden)
+                .onAppear { onTopVisibilityChange(true) }
+                .onDisappear { onTopVisibilityChange(false) }
+
             ForEach(messages, id: \.id) { message in
                 MessageBubbleView(message: message)
                     .onAppear { onMessageAppear(message.id) }
@@ -182,20 +215,26 @@ struct ConversationView: View {
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
 
-            if isGenerating {
-                TypingIndicatorView()
-                    .id("typing-indicator")
-                    .listRowSeparator(.hidden)
-                //                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            }
+            TypingIndicatorView()
+                .id("typing-indicator")
+                .listRowSeparator(.hidden)
+                .opacity(isGenerating && messages.last?.content.isEmpty == true ? 1 : 0)
 
             // Persistent bottom sentinel to ensure reliable scrolling to end
             Color.clear
                 .frame(height: 1)
                 .id(bottomSentinelID)
                 .listRowSeparator(.hidden)
+                .onAppear { onBottomVisibilityChange(true) }
+                .onDisappear { onBottomVisibilityChange(false) }
+        }
+        .onScrollPhaseChange { _, newPhase in
+            onScrollPhaseChange(newPhase)
         }
         .listStyle(.plain)
+        .transaction { txn in
+            txn.disablesAnimations = true
+        }
     }
 }
 
