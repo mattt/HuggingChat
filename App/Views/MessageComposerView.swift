@@ -4,6 +4,7 @@ import SwiftUI
 struct MessageComposerView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Binding var text: String
+    @State private var selection: TextSelection?
     let isGenerating: Bool
     @Binding var model: Model
     var chat: Chat?
@@ -14,7 +15,7 @@ struct MessageComposerView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            TextField("Send a message", text: $text, axis: .vertical)
+            TextField("Send a message", text: $text, selection: $selection, axis: .vertical)
                 .textFieldStyle(.plain)
                 .padding(12)
                 .background(Color.primary.opacity(0.05))
@@ -30,11 +31,12 @@ struct MessageComposerView: View {
                     if press.key == .return {
                         if press.modifiers.isEmpty {
                             if !isGenerating && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                selection = nil
                                 onSend()
                                 return .handled
                             }
                         } else if press.modifiers == [.shift] {
-                            _text.wrappedValue.append("\n")
+                            insertNewlineAtCursor()
                             return .handled
                         }
                     }
@@ -104,6 +106,7 @@ struct MessageComposerView: View {
                     if isGenerating, let viewModel {
                         viewModel.stopGenerating()
                     } else {
+                        selection = nil
                         onSend()
                     }
                 } label: {
@@ -127,5 +130,16 @@ struct MessageComposerView: View {
             (id: "mistralai/Mistral-7B-Instruct-v0.3", name: "Mistral 7B"),
             (id: "google/gemma-2-9b-it", name: "Gemma 2 9B"),
         ]
+    }
+    
+    private func insertNewlineAtCursor() {
+        let selection = selection ?? TextSelection(insertionPoint: text.endIndex)
+        if case let .selection(range) = selection.indices {
+            self.selection = nil
+            text.replaceSubrange(range, with: "\n")
+            if let index = text.index(range.lowerBound, offsetBy: 1, limitedBy: text.endIndex) {
+                self.selection = TextSelection(insertionPoint: index)
+            }
+        }
     }
 }
