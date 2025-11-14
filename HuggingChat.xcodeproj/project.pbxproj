@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F802D2E32EC7404F0049623D /* HuggingChatKit in Frameworks */ = {isa = PBXBuildFile; productRef = F802D2E22EC7404F0049623D /* HuggingChatKit */; };
 		F816A38C2E9A81A900E4D8AC /* AnyLanguageModel in Frameworks */ = {isa = PBXBuildFile; productRef = F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */; };
+		F8F892C82EC7465D001B04CC /* HuggingChatKit in Frameworks */ = {isa = PBXBuildFile; productRef = F8F892C72EC7465D001B04CC /* HuggingChatKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,7 +42,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F8F892C82EC7465D001B04CC /* HuggingChatKit in Frameworks */,
 				F816A38C2E9A81A900E4D8AC /* AnyLanguageModel in Frameworks */,
+				F802D2E32EC7404F0049623D /* HuggingChatKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +88,8 @@
 			name = HuggingChat;
 			packageProductDependencies = (
 				F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */,
+				F802D2E22EC7404F0049623D /* HuggingChatKit */,
+				F8F892C72EC7465D001B04CC /* HuggingChatKit */,
 			);
 			productName = Chat;
 			productReference = F816A36B2E9A7F4200E4D8AC /* HuggingChat.app */;
@@ -114,7 +120,7 @@
 			mainGroup = F816A3622E9A7F4200E4D8AC;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				F816A38A2E9A81A900E4D8AC /* XCLocalSwiftPackageReference "../AnyLanguageModel" */,
+				F8F892C62EC7465D001B04CC /* XCLocalSwiftPackageReference "Packages/HuggingChatKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F816A36C2E9A7F4200E4D8AC /* Products */;
@@ -399,16 +405,24 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		F816A38A2E9A81A900E4D8AC /* XCLocalSwiftPackageReference "../AnyLanguageModel" */ = {
+		F8F892C62EC7465D001B04CC /* XCLocalSwiftPackageReference "Packages/HuggingChatKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AnyLanguageModel;
+			relativePath = Packages/HuggingChatKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		F802D2E22EC7404F0049623D /* HuggingChatKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HuggingChatKit;
+		};
 		F816A38B2E9A81A900E4D8AC /* AnyLanguageModel */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AnyLanguageModel;
+		};
+		F8F892C72EC7465D001B04CC /* HuggingChatKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HuggingChatKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
